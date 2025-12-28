@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Pangolia MMORPG — Bruxelles → Wallonie → Francophonie</title>
+  <style>
+    :root { color-scheme: dark; }
+    body{
+      margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      background:#0b0e14; color:#e9eef7;
+    }
+    header{
+      position:sticky; top:0; z-index:10;
+      background: rgba(10,14,20,.82); backdrop-filter: blur(10px);
+      border-bottom:1px solid rgba(255,255,255,.08);
+      padding:12px 14px;
+      display:flex; gap:12px; align-items:center; justify-content:space-between;
+    }
+    .brand{font-weight:800; letter-spacing:.4px;}
+    .pill{border:1px solid rgba(255,255,255,.14); padding:6px 10px; border-radius:999px; font-size:12px;}
+    .wrap{
+      display:grid; grid-template-columns: 1.2fr .8fr;
+      gap:12px; padding:12px;
+      max-width: 1200px; margin:0 auto;
+    }
+    @media (max-width: 900px){
+      .wrap{grid-template-columns: 1fr;}
+    }
+    .card{
+      background: rgba(255,255,255,.03);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:16px;
+      overflow:hidden;
+      box-shadow: 0 12px 28px rgba(0,0,0,.35);
+    }
+    .card h2{margin:0; padding:12px 14px; border-bottom:1px solid rgba(255,255,255,.08); font-size:14px;}
+    .card .body{padding:12px 14px;}
+    .row{display:flex; gap:10px; flex-wrap:wrap;}
+    input, select, button{
+      background: rgba(255,255,255,.04);
+      color:#e9eef7;
+      border:1px solid rgba(255,255,255,.14);
+      border-radius:12px;
+      padding:10px 12px;
+      outline:none;
+    }
+    input, select{flex:1; min-width: 180px;}
+    button{cursor:pointer; font-weight:700;}
+    button.primary{background: rgba(120,220,255,.14); border-color: rgba(120,220,255,.32);}
+    button.danger{background: rgba(255,120,120,.10); border-color: rgba(255,120,120,.26);}
+    .small{font-size:12px; opacity:.85}
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:10px;
+    }
+    @media (max-width: 600px){
+      .grid{grid-template-columns: repeat(2, 1fr);}
+    }
+    .tile{
+      padding:10px 10px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.02);
+      cursor:pointer;
+      transition: transform .06s ease, border-color .1s ease;
+    }
+    .tile:hover{transform: translateY(-1px); border-color: rgba(255,255,255,.22);}
+    .tile .name{font-weight:800; font-size:13px}
+    .tile .meta{font-size:11px; opacity:.8; margin-top:2px}
+    .bar{
+      height:8px; border-radius:999px;
+      background: rgba(255,255,255,.06);
+      overflow:hidden;
+      margin-top:8px;
+      display:flex;
+    }
+    .seg{height:100%;}
+    .kvs{display:grid; grid-template-columns: 1fr 1fr; gap:8px; margin-top:10px;}
+    .kv{border:1px solid rgba(255,255,255,.10); border-radius:14px; padding:10px;}
+    .kv .k{font-size:11px; opacity:.75}
+    .kv .v{font-size:14px; font-weight:800}
+    .log{
+      max-height: 360px; overflow:auto; display:flex; flex-direction:column; gap:8px;
+      padding-right:6px;
+    }
+    .line{
+      border:1px solid rgba(255,255,255,.08);
+      background: rgba(0,0,0,.22);
+      border-radius:14px;
+      padding:10px;
+      font-size:12px;
+    }
+    .muted{opacity:.72}
+    .tag{
+      display:inline-block; font-size:10px;
+      border:1px solid rgba(255,255,255,.12);
+      padding:3px 8px; border-radius:999px; opacity:.85;
+      margin-right:6px; margin-top:6px;
+    }
+    .footerNote{opacity:.7; font-size:12px; margin-top:10px}
+  </style>
+</head>
+<body>
+<header>
+  <div>
+    <div class="brand">PANGOLIA MMORPG</div>
+    <div class="small">Convergence → Bruxelles → Wallonie → Francophonie (retourner le système contre lui-même)</div>
+  </div>
+  <div class="pill" id="status">Déconnecté</div>
+</header>
+
+<div class="wrap">
+  <section class="card">
+    <h2>Monde (districts visibles)</h2>
+    <div class="body">
+      <div class="row" style="align-items:center;justify-content:space-between;">
+        <div class="small">Clique un district pour le cibler. Les zones se débloquent avec le niveau.</div>
+        <button class="danger" id="logoutBtn" style="display:none;">Logout</button>
+      </div>
+      <div class="kvs" id="hud" style="display:none;">
+        <div class="kv"><div class="k">Personnage</div><div class="v" id="hudName">—</div></div>
+        <div class="kv"><div class="k">Faction</div><div class="v" id="hudFaction">—</div></div>
+        <div class="kv"><div class="k">Niveau / XP</div><div class="v" id="hudLevel">—</div></div>
+        <div class="kv"><div class="k">Tokens (micro / macro)</div><div class="v" id="hudTokens">—</div></div>
+      </div>
+
+      <div class="grid" id="districtGrid"></div>
+
+      <div class="footerNote">
+        <span class="muted">Indice d’auto-retournement du système:</span>
+        <span id="invIndex" style="font-weight:900;">—</span>
+        <span class="muted"> / Légitimité (ta faction):</span>
+        <span id="legit" style="font-weight:900;">—</span>
+      </div>
+    </div>
+  </section>
+
+  <aside class="card">
+    <h2>Console d’opérations</h2>
+    <div class="body" id="authBox">
+      <div class="small">Inscription / connexion. (Prototype local — change JWT_SECRET en prod.)</div>
+      <div class="row" style="margin-top:10px;">
+        <input id="username" placeholder="username (min 3)"/>
+        <input id="password" type="password" placeholder="password (min 6)"/>
+      </div>
+      <div class="row" style="margin-top:10px;">
+        <input id="characterName" placeholder="nom du personnage (inscription)"/>
+        <select id="faction"></select>
+      </div>
+      <div class="row" style="margin-top:10px;">
+        <button class="primary" id="registerBtn">Créer compte</button>
+        <button id="loginBtn">Se connecter</button>
+      </div>
+    </div>
+
+    <div class="body" id="opsBox" style="display:none;">
+      <div class="small">District ciblé : <b id="targetName">—</b></div>
+      <div class="small muted" id="targetMeta" style="margin-top:6px;">—</div>
+
+      <div class="row" style="margin-top:12px;">
+        <select id="scope">
+          <option value="micro">Micro (terrain)</option>
+          <option value="macro">Macro (institutions)</option>
+        </select>
+        <select id="actionSelect"></select>
+      </div>
+
+      <div class="row" style="margin-top:10px;">
+        <button class="primary" id="doActionBtn">Exécuter</button>
+        <button id="refreshBtn">Rafraîchir</button>
+      </div>
+
+      <div style="margin-top:12px;">
+        <div class="small">Flux narratif (district)</div>
+        <div class="log" id="log"></div>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<script>
+  let token = localStorage.getItem("pangolia_token") || "";
+  let meta = null;
+  let me = null;
+  let world = null;
+  let targetDistrictId = null;
+  let ws = null;
+
+  const $ = (id) => document.getElementById(id);
+
+  const statusEl = $("status");
+  const logoutBtn = $("logoutBtn");
+  const authBox = $("authBox");
+  const opsBox = $("opsBox");
+  const districtGrid = $("districtGrid");
+  const factionSel = $("faction");
+  const scopeSel = $("scope");
+  const actionSel = $("actionSelect");
+  const logEl = $("log");
+
+  function setStatus(txt){ statusEl.textContent = txt; }
+  function headers(){
+    return token ? { "Authorization": "Bearer " + token, "Content-Type":"application/json" } : { "Content-Type":"application/json" };
+  }
+
+  function factionColor(key){
+    const f = meta?.factions?.find(x => x.key === key);
+    // fallback
+    return f?.color || "#9aa";
+  }
+
+  function renderFactionSelect(){
+    factionSel.innerHTML = "";
+    for (const f of meta.factions){
+      const opt = document.createElement("option");
+      opt.value = f.key;
+      opt.textContent = f.name;
+      factionSel.appendChild(opt);
+    }
+  }
+
+  function renderActions(){
+    const scope = scopeSel.value;
+    actionSel.innerHTML = "";
+    const list = meta.actions[scope] || [];
+    for (const a of list){
+      const opt = document.createElement("option");
+      opt.value = a.key;
+      opt.textContent = a.name + " — " + a.desc;
+      actionSel.appendChild(opt);
+    }
+  }
+
+  function barForInfluence(inf){
+    // segmented bar by faction
+    const total = Object.values(inf).reduce((s,v)=>s+v,0) || 1;
+    const bar = document.createElement("div");
+    bar.className = "bar";
+    for (const f of meta.factions){
+      const seg = document.createElement("div");
+      seg.className = "seg";
+      seg.style.width = ((inf[f.key]||0)/total*100).toFixed(1)+"%";
+      seg.style.background = factionColor(f.key);
+      bar.appendChild(seg);
+    }
+    return bar;
+  }
+
+  function tagsEl(tags){
+    const wrap = document.createElement("div");
+    for (const t of (tags||[])){
+      const s = document.createElement("span");
+      s.className = "tag";
+      s.textContent = t;
+      wrap.appendChild(s);
+    }
+    return wrap;
+  }
+
+  function renderDistricts(){
+    districtGrid.innerHTML = "";
+    const districts = world?.districts || {};
+    const ids = Object.keys(districts);
+    if (!ids.length){
+      districtGrid.innerHTML = `<div class="small muted">Aucun district visible (???). Rafraîchis.</div>`;
+      return;
+    }
+    for (const id of ids){
+      const d = districts[id];
+      const tile = document.createElement("div");
+      tile.className = "tile";
+      tile.onclick = () => {
+        targetDistrictId = id;
+        $("targetName").textContent = d.name;
+        $("targetMeta").textContent = `Zone: ${d.zone} • Heat: ${d.heat}/100 • Tags: ${(d.tags||[]).join(", ")}`;
+        renderLog(d.narrative || []);
+        // auto-select micro if locked macro
+        renderActions();
+      };
+
+      const title = document.createElement("div");
+      title.className = "name";
+      title.textContent = d.name;
+
+      const metaLine = document.createElement("div");
+      metaLine.className = "meta";
+      metaLine.textContent = `Zone: ${d.zone} • Heat: ${d.heat}`;
+
+      tile.appendChild(title);
+      tile.appendChild(metaLine);
+      tile.appendChild(barForInfluence(d.influence));
+      tile.appendChild(tagsEl(d.tags));
+
+      districtGrid.appendChild(tile);
+
+      if (!targetDistrictId) {
+        // set first as default
+        targetDistrictId = id;
+        $("targetName").textContent = d.name;
+        $("targetMeta").textContent = `Zone: ${d.zone} • Heat: ${d.heat}/100 • Tags: ${(d.tags||[]).join(", ")}`;
+        renderLog(d.narrative || []);
+      }
+    }
+  }
+
+  function renderLog(lines){
+    logEl.innerHTML = "";
+    if (!lines || !lines.length){
+      logEl.innerHTML = `<div class="line muted">Aucun événement récent. Fais une action.</div>`;
+      return;
+    }
+    for (const it of lines){
+      const div = document.createElement("div");
+      div.className = "line";
+      div.innerHTML = `<div><b>${it.faction}</b> • <span class="muted">${new Date(it.ts).toLocaleString()}</span></div>
+                       <div>${it.line}</div>
+                       <div class="muted">Δ ${it.delta} • heat ${it.heat}</div>`;
+      logEl.appendChild(div);
+    }
+  }
+
+  function renderHUD(){
+    $("hud").style.display = me ? "grid" : "none";
+    if (!me) return;
+    $("hudName").textContent = me.name;
+    $("hudFaction").textContent = meta.factions.find(f=>f.key===me.faction)?.name || me.faction;
+    $("hudLevel").textContent = `${me.level} • ${me.xp} XP • ${me.skill_points} SP`;
+    $("hudTokens").textContent = `${me.micro_tokens} / ${me.macro_tokens}`;
+    $("invIndex").textContent = world?.global?.selfInversionIndex ?? "—";
+    $("legit").textContent = world?.global?.legitimacy?.[me.faction] ?? "—";
+  }
+
+  async function api(path, opts={}){
+    const res = await fetch(path, opts);
+    const json = await res.json().catch(()=> ({}));
+    if (!res.ok) throw Object.assign(new Error(json.error || "api_error"), { status: res.status, json });
+    return json;
+  }
+
+  async function loadMeta(){
+    meta = await api("/api/meta");
+    renderFactionSelect();
+    renderActions();
+  }
+
+  async function loadMe(){
+    const r = await api("/api/me", { headers: headers() });
+    me = r.character;
+  }
+
+  async function loadWorld(){
+    const r = await api("/api/world", { headers: headers() });
+    world = r.world;
+    renderDistricts();
+    renderHUD();
+  }
+
+  function connectWS(){
+    try{
+      ws?.close();
+      ws = new WebSocket((location.protocol==="https:"?"wss://":"ws://")+location.host);
+      ws.onopen = ()=> setStatus("Connecté (live)");
+      ws.onclose = ()=> setStatus(token ? "Connecté (HTTP)" : "Déconnecté");
+      ws.onmessage = (ev)=>{
+        let msg = null;
+        try{ msg = JSON.parse(ev.data); }catch{ return; }
+        if (msg.type === "WORLD_PATCH"){
+          const dId = msg.district;
+          if (world?.districts?.[dId]){
+            world.districts[dId].influence = msg.payload.influence;
+            world.districts[dId].heat = msg.payload.heat;
+            world.districts[dId].narrative = msg.payload.narrative.concat(world.districts[dId].narrative || []);
+            world.global = msg.global;
+            renderDistricts();
+            renderHUD();
+            if (targetDistrictId === dId) renderLog(world.districts[dId].narrative || []);
+          }
+        } else if (msg.type === "WORLD_TICK"){
+          if (world){
+            world.tick = msg.tick;
+            world.version = msg.version;
+            world.global = msg.global;
+            renderHUD();
+          }
+        }
+      };
+    }catch{
+      setStatus(token ? "Connecté (HTTP)" : "Déconnecté");
+    }
+  }
+
+  function setUIAuthed(authed){
+    authBox.style.display = authed ? "none" : "block";
+    opsBox.style.display = authed ? "block" : "none";
+    logoutBtn.style.display = authed ? "inline-block" : "none";
+  }
+
+  $("registerBtn").onclick = async () => {
+    try{
+      const body = {
+        username: $("username").value,
+        password: $("password").value,
+        characterName: $("characterName").value,
+        faction: $("faction").value
+      };
+      const r = await api("/api/register", { method:"POST", headers: headers(), body: JSON.stringify(body) });
+      token = r.token;
+      localStorage.setItem("pangolia_token", token);
+      await boot();
+    }catch(e){
+      alert("Register error: " + (e.json?.error || e.message));
+    }
+  };
+
+  $("loginBtn").onclick = async () => {
+    try{
+      const body = { username: $("username").value, password: $("password").value };
+      const r = await api("/api/login", { method:"POST", headers: headers(), body: JSON.stringify(body) });
+      token = r.token;
+      localStorage.setItem("pangolia_token", token);
+      await boot();
+    }catch(e){
+      alert("Login error: " + (e.json?.error || e.message));
+    }
+  };
+
+  logoutBtn.onclick = () => {
+    token = "";
+    me = null; world = null;
+    localStorage.removeItem("pangolia_token");
+    setUIAuthed(false);
+    districtGrid.innerHTML = "";
+    $("hud").style.display = "none";
+    setStatus("Déconnecté");
+  };
+
+  scopeSel.onchange = renderActions;
+
+  $("refreshBtn").onclick = async () => {
+    try{
+      await loadMe();
+      await loadWorld();
+    }catch(e){
+      alert("Refresh error: "+(e.json?.error||e.message));
+    }
+  };
+
+  $("doActionBtn").onclick = async () => {
+    if (!targetDistrictId) return alert("Choisis un district.");
+    try{
+      const body = {
+        scope: $("scope").value,
+        actionKey: $("actionSelect").value,
+        districtId: targetDistrictId
+      };
+      const r = await api("/api/action", { method:"POST", headers: headers(), body: JSON.stringify(body) });
+      // update local me + globals
+      me.level = r.character.level;
+      me.xp = r.character.xp;
+      me.skill_points = r.character.skill_points;
+      me.micro_tokens = r.character.micro_tokens;
+      me.macro_tokens = r.character.macro_tokens;
+
+      // update district visible
+      if (world?.districts?.[r.district.id]){
+        world.districts[r.district.id].influence = r.district.influence;
+        world.districts[r.district.id].heat = r.district.heat;
+      }
+      world.global = r.global;
+      renderHUD();
+      await loadWorld(); // re-render map + logs cleanly
+    }catch(e){
+      alert("Action error: " + (e.json?.error || e.message));
+    }
+  };
+
+  async function boot(){
+    await loadMeta();
+    if (!token){
+      setUIAuthed(false);
+      setStatus("Déconnecté");
+      return;
+    }
+    setUIAuthed(true);
+    setStatus("Connecté (HTTP)");
+    await loadMe();
+    await loadWorld();
+    connectWS();
+  }
+
+  boot();
+</script>
+</body>
+</html>
